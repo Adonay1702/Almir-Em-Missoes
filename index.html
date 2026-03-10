@@ -18,7 +18,7 @@
         }
     </style>
 </head>
-<body class="bg-neutral-100 font-sans text-neutral-800 pb-10">
+<body class="bg-neutral-100 font-sans text-neutral-800 pb-4">
 
     <!-- AVISO DE ERRO DE LIGAÇÃO (Oculto por padrão) -->
     <div id="firebaseErrorBanner" class="hidden bg-red-600 text-white text-center p-3 text-sm font-bold shadow-md z-50 relative">
@@ -190,7 +190,6 @@
                     <i class="fa-solid fa-key text-yellow-500"></i> Alterar Senha de Acesso
                 </h4>
                 <div class="space-y-3">
-                    <!-- Retirado o maxlength="4" e tracking-widest -->
                     <input type="password" id="newPinInput" placeholder="Nova Senha" class="w-full text-center text-lg p-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition-shadow">
                     
                     <input type="password" id="confirmNewPinInput" placeholder="Confirmar Nova Senha" class="w-full text-center text-lg p-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition-shadow">
@@ -203,26 +202,60 @@
             </div>
         </div>
 
-        <!-- VERSÍCULO BÍBLICO -->
-        <div class="mt-8 mb-4 px-6 text-center">
-            <div class="flex justify-center mb-3">
-                <i class="fa-solid fa-book-open text-2xl text-neutral-400"></i>
+        <!-- ========================================== -->
+        <!-- PARTE DE BAIXO: WHATSAPP, COMPARTILHAR E VERSÍCULO -->
+        <!-- ========================================== -->
+        
+        <div class="mt-8 mb-6 space-y-5">
+            
+            <!-- Cartão de Contato Direto WhatsApp -->
+            <a href="https://api.whatsapp.com/send?phone=5521998761263&text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20a%20miss%C3%A3o%20para%20Angola!" target="_blank" class="block bg-white rounded-2xl shadow-sm border border-neutral-200 p-4 hover:bg-neutral-50 transition-colors">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-[#25D366]/10 rounded-full flex items-center justify-center text-[#25D366] shrink-0">
+                        <i class="fa-brands fa-whatsapp text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-neutral-500 font-bold uppercase tracking-wider mb-0.5">Dúvidas ou Informações?</p>
+                        <p class="text-sm font-semibold text-neutral-800">Chame no WhatsApp</p>
+                        <p class="text-sm text-[#25D366] font-bold mt-0.5">+55 21 99876-1263</p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Botão de Compartilhar (Ajuda muito no alcance da campanha) -->
+            <button id="shareBtn" class="w-full bg-[#25D366] text-white font-bold py-4 rounded-2xl hover:bg-[#1ebe5b] transition-colors shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-share-nodes text-xl"></i>
+                <span class="text-lg tracking-wide">Compartilhar Campanha</span>
+            </button>
+
+            <!-- Card do Versículo Bíblico Melhorado -->
+            <div class="bg-white rounded-2xl shadow-md p-6 text-center border-t-4 border-red-600 relative overflow-hidden">
+                <i class="fa-solid fa-quote-left absolute top-4 left-4 text-4xl text-neutral-100"></i>
+                <div class="relative z-10">
+                    <div class="flex justify-center mb-3">
+                        <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-600">
+                            <i class="fa-solid fa-book-open text-xl"></i>
+                        </div>
+                    </div>
+                    <blockquote class="text-sm italic text-neutral-700 leading-relaxed font-medium">
+                        "Não deixes de fazer bem a quem o merece, estando em tuas mãos a capacidade de fazê-lo. Não digas ao teu próximo: Vai, e volta amanhã que to darei, se já o tens contigo."
+                    </blockquote>
+                    <p class="text-xs font-black text-red-600 mt-4 uppercase tracking-widest">
+                        - Provérbios 3:27-28
+                    </p>
+                </div>
             </div>
-            <blockquote class="text-sm italic text-neutral-600 leading-relaxed">
-                "Não deixes de fazer bem a quem o merece, estando em tuas mãos a capacidade de fazê-lo. Não digas ao teu próximo: Vai, e volta amanhã que to darei, se já o tens contigo."
-            </blockquote>
-            <p class="text-xs font-bold text-neutral-500 mt-3 uppercase tracking-wider">
-                - Provérbios 3:27-28
-            </p>
+
         </div>
 
-    </div>
+        <!-- Rodapé e Acesso Admin Melhorado -->
+        <div class="mt-8 text-center border-t border-neutral-200 pt-6 pb-6" id="adminToggleContainer">
+            <p class="text-xs text-neutral-400 font-medium mb-4 uppercase tracking-wider">Projeto Missionário - Rumo a Angola</p>
+            <button id="openModalBtn" type="button" class="text-neutral-400 hover:text-neutral-800 transition-colors inline-flex items-center gap-1.5 text-xs font-medium bg-white border border-neutral-200 shadow-sm py-2 px-4 rounded-full">
+                <i class="fa-solid fa-lock text-[10px]"></i> Acesso Restrito (Admin)
+            </button>
+        </div>
 
-    <!-- RODAPÉ E BOTÃO DE ADMIN -->
-    <div class="mt-6 text-center pb-8" id="adminToggleContainer">
-        <button id="openModalBtn" type="button" class="text-neutral-400 hover:text-neutral-800 transition-colors inline-flex items-center gap-1 text-xs font-medium bg-neutral-200/50 py-1.5 px-4 rounded-full">
-            <i class="fa-solid fa-lock text-[10px]"></i> Acesso Restrito (Admin)
-        </button>
     </div>
 
     <!-- MODAL DE SENHA -->
@@ -241,7 +274,6 @@
             
             <form id="loginForm">
                 <div class="relative w-full mb-4">
-                    <!-- Retirado o maxlength="4" e ajustado o espaçamento da fonte (tracking) -->
                     <input type="password" id="pinInput" placeholder="Senha" class="w-full text-center text-2xl p-4 border-2 rounded-xl outline-none focus:ring-4 focus:ring-yellow-400/20 transition-all border-neutral-200 text-neutral-800 pr-12">
                     <button type="button" id="togglePasswordBtn" class="absolute inset-y-0 right-0 pr-4 flex items-center text-neutral-400 hover:text-neutral-600">
                         <i class="fa-solid fa-eye" id="eyeIcon"></i>
@@ -322,7 +354,9 @@
             newPinInput: document.getElementById('newPinInput'),
             confirmNewPinInput: document.getElementById('confirmNewPinInput'),
             changePinBtn: document.getElementById('changePinBtn'),
-            pinChangeMessage: document.getElementById('pinChangeMessage')
+            pinChangeMessage: document.getElementById('pinChangeMessage'),
+            
+            shareBtn: document.getElementById('shareBtn')
         };
 
         function updateUI() {
@@ -339,14 +373,21 @@
             ui.progressBar.style.width = `${progressPercent}%`;
             ui.progressText.innerText = `${progressPercent.toFixed(1)}% da meta alcançada`;
 
+            // Esconde os elementos visuais (compartilhar, wpp e rodape) quando em modo admin para tela mais limpa
+            const wppCard = document.querySelector('a[href^="https://api.whatsapp.com/send"]');
+            
             if (isAdmin) {
                 ui.adminSection.classList.remove('hidden');
                 ui.adminToggleContainer.classList.add('hidden');
                 ui.pinModal.classList.add('hidden');
                 ui.pinModal.classList.remove('flex');
+                ui.shareBtn.classList.add('hidden'); 
+                if(wppCard) wppCard.classList.add('hidden');
             } else {
                 ui.adminSection.classList.add('hidden');
                 ui.adminToggleContainer.classList.remove('hidden');
+                ui.shareBtn.classList.remove('hidden');
+                if(wppCard) wppCard.classList.remove('hidden');
             }
 
             renderLists();
@@ -477,7 +518,6 @@
             }
         });
 
-        // ALTERAR SENHA COM CONFIRMAÇÃO (SEM LIMITE DE TAMANHO)
         ui.changePinBtn.addEventListener('click', async () => {
             const newPin = ui.newPinInput.value;
             const confirmPin = ui.confirmNewPinInput.value;
@@ -519,6 +559,25 @@
                     ui.changePinBtn.disabled = false;
                     ui.changePinBtn.innerText = 'Salvar Nova Senha';
                 }
+            }
+        });
+
+        ui.shareBtn.addEventListener('click', async () => {
+            const shareData = {
+                title: 'Almir em Missões - Rumo a Angola 🇦🇴',
+                text: 'Estou arrecadando valores para uma missão em Angola! Qualquer valor abençoa a obra. Acesse o painel para ver a nossa meta e contribuir:',
+                url: window.location.href
+            };
+
+            try {
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                } else {
+                    const waText = encodeURIComponent(shareData.text + "\n\n" + shareData.url);
+                    window.open(`https://api.whatsapp.com/send?text=${waText}`, '_blank');
+                }
+            } catch (err) {
+                console.log('Erro ao compartilhar:', err);
             }
         });
 
