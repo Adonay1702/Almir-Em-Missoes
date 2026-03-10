@@ -36,7 +36,6 @@
         <div class="relative z-10 max-w-md mx-auto pt-10 pb-6 px-4 text-center">
             <div class="flex justify-center mb-4">
                 <div class="relative">
-                    <!-- IMAGEM ATUALIZADA PARA O NOME DO ARQUIVO ALMIR.JPG -->
                     <img src="almir.jpg" alt="Almir" class="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-lg object-cover bg-white" onerror="this.src='https://ui-avatars.com/api/?name=Almir+Missões&background=000&color=fff&size=128&font-size=0.33'">
                     <div class="absolute -bottom-2 -right-2 bg-yellow-400 text-black p-1.5 rounded-full border-2 border-white shadow-sm flex items-center justify-center w-8 h-8">
                         <i class="fa-solid fa-earth-americas text-sm"></i>
@@ -191,10 +190,10 @@
                     <i class="fa-solid fa-key text-yellow-500"></i> Alterar Senha de Acesso
                 </h4>
                 <div class="space-y-3">
-                    <input type="password" id="newPinInput" placeholder="Nova Senha (4 dígitos)" maxlength="4" class="w-full text-center tracking-widest text-lg p-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition-shadow">
+                    <!-- Retirado o maxlength="4" e tracking-widest -->
+                    <input type="password" id="newPinInput" placeholder="Nova Senha" class="w-full text-center text-lg p-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition-shadow">
                     
-                    <!-- NOVO CAMPO DE CONFIRMAÇÃO DE SENHA -->
-                    <input type="password" id="confirmNewPinInput" placeholder="Confirmar Nova Senha" maxlength="4" class="w-full text-center tracking-widest text-lg p-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition-shadow">
+                    <input type="password" id="confirmNewPinInput" placeholder="Confirmar Nova Senha" class="w-full text-center text-lg p-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition-shadow">
                     
                     <button id="changePinBtn" type="button" class="w-full bg-neutral-200 text-neutral-800 font-bold py-2.5 rounded-lg hover:bg-neutral-300 transition-colors">
                         Salvar Nova Senha
@@ -237,12 +236,13 @@
                     <i class="fa-solid fa-unlock text-2xl"></i>
                 </div>
                 <h2 class="text-xl font-bold text-neutral-800">Acesso do Administrador</h2>
-                <p class="text-sm text-neutral-500 mt-2">Insira a senha de 4 dígitos para gerenciar as doações.</p>
+                <p class="text-sm text-neutral-500 mt-2">Insira a senha para gerenciar as doações.</p>
             </div>
             
             <form id="loginForm">
                 <div class="relative w-full mb-4">
-                    <input type="password" id="pinInput" placeholder="****" maxlength="4" class="w-full text-center tracking-widest text-2xl p-4 border-2 rounded-xl outline-none focus:ring-4 focus:ring-yellow-400/20 transition-all border-neutral-200 text-neutral-800 pr-12">
+                    <!-- Retirado o maxlength="4" e ajustado o espaçamento da fonte (tracking) -->
+                    <input type="password" id="pinInput" placeholder="Senha" class="w-full text-center text-2xl p-4 border-2 rounded-xl outline-none focus:ring-4 focus:ring-yellow-400/20 transition-all border-neutral-200 text-neutral-800 pr-12">
                     <button type="button" id="togglePasswordBtn" class="absolute inset-y-0 right-0 pr-4 flex items-center text-neutral-400 hover:text-neutral-600">
                         <i class="fa-solid fa-eye" id="eyeIcon"></i>
                     </button>
@@ -280,7 +280,7 @@
         const SETTINGS_PATH = ['artifacts', 'site-almir', 'public', 'data', 'settings', 'admin'];
 
         const TARGET_AMOUNT = 7580.00;
-        const INITIAL_AMOUNT = 1965.42;
+        const INITIAL_AMOUNT = 1965.42; 
         const PIX_KEY = "almir.campeao82@gmail.com";
         
         let contributions = [];
@@ -477,13 +477,13 @@
             }
         });
 
-        // ALTERAR SENHA COM CONFIRMAÇÃO
+        // ALTERAR SENHA COM CONFIRMAÇÃO (SEM LIMITE DE TAMANHO)
         ui.changePinBtn.addEventListener('click', async () => {
             const newPin = ui.newPinInput.value;
             const confirmPin = ui.confirmNewPinInput.value;
             
-            if (newPin.length !== 4 || isNaN(newPin)) {
-                ui.pinChangeMessage.textContent = "A senha deve conter exatamente 4 números.";
+            if (newPin.length < 1) {
+                ui.pinChangeMessage.textContent = "A senha não pode ficar vazia.";
                 ui.pinChangeMessage.className = "text-xs text-center text-red-500 font-bold block mt-2";
                 return;
             }
