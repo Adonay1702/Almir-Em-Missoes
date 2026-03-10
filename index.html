@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,6 +20,12 @@
 </head>
 <body class="bg-neutral-100 font-sans text-neutral-800 pb-10">
 
+    <!-- AVISO DE ERRO DE LIGAÇÃO (Oculto por padrão) -->
+    <div id="firebaseErrorBanner" class="hidden bg-red-600 text-white text-center p-3 text-sm font-bold shadow-md z-50 relative">
+        <i class="fa-solid fa-triangle-exclamation mr-2"></i> Aviso: Os novos dados não estão sendo salvos na nuvem. Verifique as "Rules" do Firestore.
+        <button onclick="document.getElementById('firebaseErrorBanner').classList.add('hidden')" class="absolute right-4 top-3"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
     <!-- CABEÇALHO / BANDEIRA -->
     <div class="relative bg-red-600 text-white overflow-hidden shadow-md">
         <div class="absolute inset-0 flex flex-col opacity-20">
@@ -30,7 +36,8 @@
         <div class="relative z-10 max-w-md mx-auto pt-10 pb-6 px-4 text-center">
             <div class="flex justify-center mb-4">
                 <div class="relative">
-                    <img src="https://ui-avatars.com/api/?name=Almir+Missões&background=000&color=fff&size=128&font-size=0.33" alt="Almir" class="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-lg object-cover bg-white">
+                    <!-- IMAGEM ATUALIZADA PARA O NOME DO ARQUIVO ALMIR.JPG -->
+                    <img src="almir.jpg" alt="Almir" class="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-lg object-cover bg-white" onerror="this.src='https://ui-avatars.com/api/?name=Almir+Missões&background=000&color=fff&size=128&font-size=0.33'">
                     <div class="absolute -bottom-2 -right-2 bg-yellow-400 text-black p-1.5 rounded-full border-2 border-white shadow-sm flex items-center justify-center w-8 h-8">
                         <i class="fa-solid fa-earth-americas text-sm"></i>
                     </div>
@@ -52,8 +59,12 @@
     <div class="max-w-md mx-auto px-4 -mt-2 relative z-20">
         
         <!-- CARTÃO DE PROGRESSO -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 border-t-4 border-yellow-400">
-            <div class="text-center mb-6">
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 border-t-4 border-yellow-400 relative overflow-hidden">
+            <div class="absolute top-3 right-3 flex items-center gap-1.5 text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Ao Vivo
+            </div>
+
+            <div class="text-center mb-6 mt-2">
                 <p class="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-1">
                     Passagem Ida e Volta
                 </p>
@@ -71,19 +82,19 @@
                 </div>
                 
                 <div class="h-4 bg-neutral-200 rounded-full overflow-hidden shadow-inner">
-                    <div id="progressBar" class="h-full bg-gradient-to-r from-yellow-400 to-green-500 rounded-full transition-all duration-1000 ease-out relative" style="width: 0%">
+                    <div id="progressBar" class="h-full bg-gradient-to-r from-yellow-400 to-green-500 rounded-full transition-all duration-1000 ease-out relative" style="width: 25.9%">
                         <div class="absolute top-0 left-0 right-0 bottom-0 bg-white opacity-20 w-full h-full"></div>
                     </div>
                 </div>
                 
                 <div class="flex justify-between mt-2 text-lg font-bold">
-                    <span class="text-green-600" id="totalRaisedDisplay">R$ 0,00</span>
-                    <span class="text-red-500" id="remainingDisplay">R$ 0,00</span>
+                    <span class="text-green-600" id="totalRaisedDisplay">R$ 1.965,42</span>
+                    <span class="text-red-500" id="remainingDisplay">R$ 5.614,58</span>
                 </div>
             </div>
 
             <div class="text-center text-sm text-neutral-500 font-medium bg-neutral-50 py-2 rounded-lg" id="progressText">
-                0% da meta alcançada
+                25.9% da meta alcançada
             </div>
         </div>
 
@@ -113,7 +124,7 @@
         <div id="publicDonationsSection" class="bg-white rounded-2xl shadow-md p-6 mb-6 border border-neutral-100 hidden">
             <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-neutral-800">
                 <i class="fa-solid fa-user text-red-600"></i>
-                Apoiantes Recentes
+                Apoiadores Recentes
             </h3>
             <div id="publicDonationsList" class="space-y-3">
                 <!-- Preenchido via JS -->
@@ -123,7 +134,7 @@
             </p>
         </div>
 
-        <!-- SECÇÃO DO ADMINISTRADOR -->
+        <!-- SEÇÃO DO ADMINISTRADOR -->
         <div id="adminSection" class="bg-yellow-50 border-2 border-yellow-400 rounded-2xl shadow-lg p-6 mb-6 animate-fade-in hidden">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-black text-neutral-900 flex items-center gap-2">
@@ -136,12 +147,15 @@
             </div>
 
             <div class="mb-6 bg-white p-3 rounded-xl border border-yellow-200 text-center text-sm shadow-sm">
-                <span class="text-neutral-500">Valor Inicial Registado: </span>
+                <span class="text-neutral-500">Valor Inicial Registrado: </span>
                 <strong class="text-neutral-800" id="initialAmountDisplay">R$ 1.965,42</strong>
             </div>
 
+            <!-- Adicionar Doação -->
             <form id="addDonationForm" class="bg-white p-4 rounded-xl shadow-sm mb-6 border border-neutral-200">
-                <h4 class="font-bold text-sm text-neutral-600 mb-3">Registar Nova Doação</h4>
+                <h4 class="font-bold text-sm text-neutral-600 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> Registrar Nova Doação
+                </h4>
                 <div class="space-y-3">
                     <div>
                         <label class="block text-xs font-semibold text-neutral-500 mb-1">Nome do Doador</label>
@@ -158,14 +172,35 @@
                 </div>
             </form>
 
-            <h4 class="font-bold text-sm text-neutral-600 mb-3">Histórico de Adições</h4>
-            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden">
+            <!-- Histórico -->
+            <h4 class="font-bold text-sm text-neutral-600 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left"></i> Histórico de Adições
+            </h4>
+            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden mb-6">
                 <div id="emptyAdminList" class="p-6 text-center text-neutral-500 text-sm">
-                    Nenhuma doação nova registada ainda.
+                    Nenhuma doação nova registrada ainda.
                 </div>
                 <ul id="adminDonationsList" class="divide-y divide-neutral-100 max-h-64 overflow-y-auto hidden">
                     <!-- Preenchido via JS -->
                 </ul>
+            </div>
+
+            <!-- Configurações: Alterar Senha -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-neutral-200">
+                <h4 class="font-bold text-sm text-neutral-600 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-key text-yellow-500"></i> Alterar Senha de Acesso
+                </h4>
+                <div class="space-y-3">
+                    <input type="password" id="newPinInput" placeholder="Nova Senha (4 dígitos)" maxlength="4" class="w-full text-center tracking-widest text-lg p-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition-shadow">
+                    
+                    <!-- NOVO CAMPO DE CONFIRMAÇÃO DE SENHA -->
+                    <input type="password" id="confirmNewPinInput" placeholder="Confirmar Nova Senha" maxlength="4" class="w-full text-center tracking-widest text-lg p-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition-shadow">
+                    
+                    <button id="changePinBtn" type="button" class="w-full bg-neutral-200 text-neutral-800 font-bold py-2.5 rounded-lg hover:bg-neutral-300 transition-colors">
+                        Salvar Nova Senha
+                    </button>
+                    <p id="pinChangeMessage" class="text-xs text-center hidden"></p>
+                </div>
             </div>
         </div>
 
@@ -202,7 +237,7 @@
                     <i class="fa-solid fa-unlock text-2xl"></i>
                 </div>
                 <h2 class="text-xl font-bold text-neutral-800">Acesso do Administrador</h2>
-                <p class="text-sm text-neutral-500 mt-2">Insira a senha de 4 dígitos para gerir as doações.</p>
+                <p class="text-sm text-neutral-500 mt-2">Insira a senha de 4 dígitos para gerenciar as doações.</p>
             </div>
             
             <form id="loginForm">
@@ -222,26 +257,41 @@
         </div>
     </div>
 
-    <!-- LÓGICA DO APLICATIVO -->
-    <script>
-        // Configurações principais
+    <!-- LÓGICA DO APLICATIVO COM FIREBASE MODULAR -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVg6Q10s5kpCQS_S8j5ykrwNGg2yVXEc0",
+            authDomain: "site-almir.firebaseapp.com",
+            projectId: "site-almir",
+            storageBucket: "site-almir.firebasestorage.app",
+            messagingSenderId: "645270667449",
+            appId: "1:645270667449:web:e3391693979c9955131b68"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        const COLLECTION_PATH = ['artifacts', 'site-almir', 'public', 'data', 'contributions'];
+        const SETTINGS_PATH = ['artifacts', 'site-almir', 'public', 'data', 'settings', 'admin'];
+
         const TARGET_AMOUNT = 7580.00;
         const INITIAL_AMOUNT = 1965.42;
         const PIX_KEY = "almir.campeao82@gmail.com";
-        const ADMIN_PIN = "1234";
         
-        // Estado
         let contributions = [];
         let isAdmin = false;
-        let isOnlineMode = false;
-        let db, user, appId;
+        let currentUser = null;
+        let currentAdminPin = "1234";
 
-        // Utilitários de Formatação
         const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
         const formatDate = (ms) => new Date(ms).toLocaleDateString('pt-BR');
         const formatTime = (ms) => new Date(ms).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
 
-        // Elementos DOM principais
         const ui = {
             targetAmount: document.getElementById('targetAmountDisplay'),
             raisedAmount: document.getElementById('totalRaisedDisplay'),
@@ -266,14 +316,20 @@
             publicDonationsList: document.getElementById('publicDonationsList'),
             moreDonorsText: document.getElementById('moreDonorsText'),
             adminDonationsList: document.getElementById('adminDonationsList'),
-            emptyAdminList: document.getElementById('emptyAdminList')
+            emptyAdminList: document.getElementById('emptyAdminList'),
+            errorBanner: document.getElementById('firebaseErrorBanner'),
+
+            newPinInput: document.getElementById('newPinInput'),
+            confirmNewPinInput: document.getElementById('confirmNewPinInput'),
+            changePinBtn: document.getElementById('changePinBtn'),
+            pinChangeMessage: document.getElementById('pinChangeMessage')
         };
 
-        // Atualizar Interface
         function updateUI() {
             ui.targetAmount.innerText = formatCurrency(TARGET_AMOUNT);
             
             const addedContributions = contributions.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+            
             const totalRaised = INITIAL_AMOUNT + addedContributions;
             const remaining = Math.max(0, TARGET_AMOUNT - totalRaised);
             const progressPercent = Math.min(100, (totalRaised / TARGET_AMOUNT) * 100);
@@ -283,7 +339,6 @@
             ui.progressBar.style.width = `${progressPercent}%`;
             ui.progressText.innerText = `${progressPercent.toFixed(1)}% da meta alcançada`;
 
-            // Alternar Visão Admin/Público
             if (isAdmin) {
                 ui.adminSection.classList.remove('hidden');
                 ui.adminToggleContainer.classList.add('hidden');
@@ -297,9 +352,7 @@
             renderLists();
         }
 
-        // Renderizar Listas de Doações
         function renderLists() {
-            // Lista Pública
             if (contributions.length > 0 && !isAdmin) {
                 ui.publicDonationsSection.classList.remove('hidden');
                 ui.publicDonationsList.innerHTML = contributions.slice(0, 5).map(c => `
@@ -319,10 +372,22 @@
                 ui.publicDonationsSection.classList.add('hidden');
             }
 
-            // Lista Admin
             if (contributions.length > 0) {
                 ui.emptyAdminList.classList.add('hidden');
                 ui.adminDonationsList.classList.remove('hidden');
+                
+                window.handleDelete = async function(docId) {
+                    if (!currentUser) return;
+                    if (!confirm("Tem certeza que deseja remover esta doação? O total será recalculado.")) return;
+                    try {
+                        const docRef = doc(db, ...COLLECTION_PATH, docId);
+                        await deleteDoc(docRef);
+                    } catch (err) {
+                        console.error("Erro ao apagar:", err);
+                        ui.errorBanner.classList.remove('hidden');
+                    }
+                };
+
                 ui.adminDonationsList.innerHTML = contributions.map(c => `
                     <li class="p-3 flex justify-between items-center hover:bg-neutral-50 transition-colors">
                         <div>
@@ -331,7 +396,7 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="font-bold text-green-600 text-sm">+${formatCurrency(c.amount)}</span>
-                            <button onclick="window.deleteDonation('${c.id}')" class="text-neutral-300 hover:text-red-500 transition-colors p-1" title="Remover">
+                            <button onclick="window.handleDelete('${c.id}')" class="text-neutral-300 hover:text-red-500 transition-colors p-1" title="Remover">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
@@ -343,7 +408,120 @@
             }
         }
 
-        // Eventos de Botões Básicos
+        updateUI();
+
+        signInAnonymously(auth).catch(err => console.error("Falha na autenticação:", err));
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                
+                const collRef = collection(db, ...COLLECTION_PATH);
+                onSnapshot(collRef, (snapshot) => {
+                    ui.errorBanner.classList.add('hidden');
+                    contributions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    contributions.sort((a, b) => b.createdAt - a.createdAt);
+                    updateUI(); 
+                }, (error) => {
+                    console.error("Erro no Firestore (Verifique as Rules):", error);
+                    ui.errorBanner.classList.remove('hidden');
+                });
+
+                const settingsRef = doc(db, ...SETTINGS_PATH);
+                onSnapshot(settingsRef, (docSnap) => {
+                    if (docSnap.exists() && docSnap.data().pin) {
+                        currentAdminPin = docSnap.data().pin;
+                    }
+                }, (error) => {
+                    console.error("Erro ao ler configurações de senha:", error);
+                });
+            }
+        });
+
+        ui.addDonationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = ui.donorName.value.trim();
+            const amount = parseFloat(ui.donationAmount.value.replace(',', '.'));
+            
+            if (!name || isNaN(amount)) return;
+            
+            ui.submitDonationBtn.disabled = true;
+            ui.submitDonationBtn.innerHTML = 'Salvando... <i class="fa-solid fa-spinner fa-spin ml-2"></i>';
+
+            if (currentUser) {
+                try {
+                    const collRef = collection(db, ...COLLECTION_PATH);
+                    await addDoc(collRef, {
+                        name: name,
+                        amount: amount,
+                        createdAt: Date.now(),
+                        addedBy: currentUser.uid
+                    });
+                    ui.donorName.value = '';
+                    ui.donationAmount.value = '';
+                } catch (error) {
+                    console.error("Erro ao guardar doação:", error);
+                    ui.errorBanner.classList.remove('hidden');
+                } finally {
+                    ui.submitDonationBtn.disabled = false;
+                    ui.submitDonationBtn.innerHTML = '<i class="fa-solid fa-circle-plus"></i><span>Adicionar Valor ao Total</span>';
+                }
+            } else {
+                contributions.unshift({ id: Date.now().toString(), name, amount, createdAt: Date.now() });
+                updateUI();
+                ui.donorName.value = '';
+                ui.donationAmount.value = '';
+                ui.submitDonationBtn.disabled = false;
+                ui.submitDonationBtn.innerHTML = '<i class="fa-solid fa-circle-plus"></i><span>Adicionar Valor ao Total</span>';
+            }
+        });
+
+        // ALTERAR SENHA COM CONFIRMAÇÃO
+        ui.changePinBtn.addEventListener('click', async () => {
+            const newPin = ui.newPinInput.value;
+            const confirmPin = ui.confirmNewPinInput.value;
+            
+            if (newPin.length !== 4 || isNaN(newPin)) {
+                ui.pinChangeMessage.textContent = "A senha deve conter exatamente 4 números.";
+                ui.pinChangeMessage.className = "text-xs text-center text-red-500 font-bold block mt-2";
+                return;
+            }
+
+            if (newPin !== confirmPin) {
+                ui.pinChangeMessage.textContent = "As senhas não coincidem!";
+                ui.pinChangeMessage.className = "text-xs text-center text-red-500 font-bold block mt-2";
+                return;
+            }
+
+            ui.changePinBtn.disabled = true;
+            ui.changePinBtn.innerHTML = 'Salvando...';
+
+            if (currentUser) {
+                try {
+                    const settingsRef = doc(db, ...SETTINGS_PATH);
+                    await setDoc(settingsRef, { pin: newPin }, { merge: true });
+                    
+                    ui.pinChangeMessage.textContent = "Senha alterada com sucesso!";
+                    ui.pinChangeMessage.className = "text-xs text-center text-green-600 font-bold block mt-2";
+                    ui.newPinInput.value = '';
+                    ui.confirmNewPinInput.value = '';
+                    
+                    setTimeout(() => {
+                        ui.pinChangeMessage.classList.add('hidden');
+                        ui.pinChangeMessage.classList.remove('block');
+                    }, 3000);
+                } catch (err) {
+                    console.error("Erro ao alterar senha:", err);
+                    ui.pinChangeMessage.textContent = "Erro de permissão no Firebase. Verifique as 'Rules'.";
+                    ui.pinChangeMessage.className = "text-xs text-center text-red-500 font-bold block mt-2";
+                } finally {
+                    ui.changePinBtn.disabled = false;
+                    ui.changePinBtn.innerText = 'Salvar Nova Senha';
+                }
+            }
+        });
+
         ui.copyPixBtn.addEventListener('click', () => {
             const textArea = document.createElement("textarea");
             textArea.value = PIX_KEY;
@@ -363,10 +541,9 @@
             document.body.removeChild(textArea);
         });
 
-        // Eventos do Modal de Login
         document.getElementById('openModalBtn').addEventListener('click', () => {
             ui.pinModal.classList.remove('hidden');
-            ui.pinModal.classList.add('flex'); // Garante que fica centralizado
+            ui.pinModal.classList.add('flex');
             setTimeout(() => ui.pinInput.focus(), 100);
         });
 
@@ -377,7 +554,6 @@
             ui.pinInput.value = '';
         });
 
-        // Olhinho da Senha
         document.getElementById('togglePasswordBtn').addEventListener('click', () => {
             const icon = document.getElementById('eyeIcon');
             if (ui.pinInput.type === 'password') {
@@ -396,10 +572,10 @@
             updateUI();
         });
 
-        // Submissão do Login (Corrigido para não recarregar a página)
         ui.loginForm.addEventListener('submit', (e) => {
-            e.preventDefault(); // Impede o recarregamento da página!
-            if (ui.pinInput.value === ADMIN_PIN) {
+            e.preventDefault();
+            
+            if (ui.pinInput.value === currentAdminPin) {
                 isAdmin = true;
                 ui.pinInput.value = '';
                 ui.pinError.classList.add('hidden');
@@ -413,46 +589,8 @@
             }
         });
 
-        // Submissão de Nova Doação
-        ui.addDonationForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = ui.donorName.value.trim();
-            const amount = parseFloat(ui.donationAmount.value.replace(',', '.'));
-            
-            if (!name || isNaN(amount)) return;
-            
-            ui.submitDonationBtn.disabled = true;
-            ui.submitDonationBtn.innerHTML = 'Salvando...';
-
-            const newDoc = {
-                name: name,
-                amount: amount,
-                createdAt: Date.now(),
-                addedBy: 'local-user'
-            };
-
-            // Simulação Local de Sucesso
-            newDoc.id = Date.now().toString();
-            contributions.unshift(newDoc); // Adiciona no início da lista
-            updateUI();
-
-            ui.donorName.value = '';
-            ui.donationAmount.value = '';
-            ui.submitDonationBtn.disabled = false;
-            ui.submitDonationBtn.innerHTML = '<i class="fa-solid fa-circle-plus"></i><span>Adicionar Valor ao Total</span>';
-        });
-
-        // Apagar Doação
-        window.deleteDonation = function(id) {
-            if (!confirm("Tem a certeza que deseja remover esta doação?")) return;
-            contributions = contributions.filter(c => c.id !== id);
-            updateUI();
-        };
-
-        // Inicia a Interface
-        updateUI();
-
     </script>
 </body>
 </html>
+
 
