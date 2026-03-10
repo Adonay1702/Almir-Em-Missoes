@@ -306,6 +306,11 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // =========================================================================
+        // SEU LINK ENCURTADO DO BITLY
+        // =========================================================================
+        const LINK_ENCURTADO = "https://bit.ly/almir-em-missoes-angola"; 
+        
         const firebaseConfig = {
             apiKey: "AIzaSyCVg6Q10s5kpCQS_S8j5ykrwNGg2yVXEc0",
             authDomain: "site-almir.firebaseapp.com",
@@ -384,7 +389,6 @@
             ui.progressBar.style.width = `${progressPercent}%`;
             ui.progressText.innerText = `${progressPercent.toFixed(1)}% da meta alcançada`;
 
-            // Esconde os elementos visuais (compartilhar, wpp e rodape) quando em modo admin para tela mais limpa
             const wppCard = document.querySelector('a[href^="https://api.whatsapp.com/send"]');
             
             if (isAdmin) {
@@ -577,13 +581,15 @@
             const shareData = {
                 title: 'Almir em Missões - Rumo a Angola 🇦🇴',
                 text: 'Estou arrecadando valores para uma missão em Angola! Qualquer valor abençoa a obra. Acesse o painel para ver a nossa meta e contribuir:',
-                url: window.location.href
+                url: LINK_ENCURTADO
             };
 
             try {
+                // Tenta usar o compartilhamento nativo do celular
                 if (navigator.share) {
                     await navigator.share(shareData);
                 } else {
+                    // Fallback se não suportar o nativo
                     const waText = encodeURIComponent(shareData.text + "\n\n" + shareData.url);
                     window.open(`https://api.whatsapp.com/send?text=${waText}`, '_blank');
                 }
