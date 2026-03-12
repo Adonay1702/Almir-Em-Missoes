@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Almir em Missões</title>
+
+    <!-- METATAGS PARA WHATSAPP E REDES SOCIAIS (Open Graph) -->
+    <meta property="og:title" content="Almir em Missões - Rumo a Angola 🇦🇴" />
+    <meta property="og:description" content="Ajude o Almir a bater a meta para as passagens de ida e volta. Faça sua contribuição via PIX e acompanhe o progresso!" />
+    <meta property="og:image" content="https://adonay1702.github.io/Almir-Em-Missoes/almir.jpg" />
+    <meta property="og:url" content="https://adonay1702.github.io/Almir-Em-Missoes/" />
+    <meta property="og:type" content="website" />
+
     <!-- Tailwind CSS para o design -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome para os ícones -->
@@ -30,7 +38,6 @@
         <div class="relative z-10 max-w-md mx-auto pt-10 pb-6 px-4 text-center">
             <div class="flex justify-center mb-4">
                 <div class="relative">
-                    <!-- A IMAGEM FOI ALTERADA AQUI PARA almir.jpg -->
                     <img src="almir.jpg" alt="Almir" class="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-lg object-cover bg-white">
                     <div class="absolute -bottom-2 -right-2 bg-yellow-400 text-black p-1.5 rounded-full border-2 border-white shadow-sm flex items-center justify-center w-8 h-8">
                         <i class="fa-solid fa-earth-americas text-sm"></i>
@@ -225,11 +232,9 @@
 
     <!-- LÓGICA DO APLICATIVO COM FIREBASE -->
     <script type="module">
-        // 1. Importar Firebase via CDN
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 2. Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCVg6Q10s5kpCQS_S8j5ykrwNGg2yVXEc0",
             authDomain: "site-almir.firebaseapp.com",
@@ -239,26 +244,21 @@
             appId: "1:645270667449:web:e3391693979c9955131b68"
         };
 
-        // 3. Inicializar Firebase e Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Configurações principais
         const TARGET_AMOUNT = 7580.00;
         const INITIAL_AMOUNT = 1965.42;
         const PIX_KEY = "almir.campeao82@gmail.com";
         const ADMIN_PIN = "1234";
         
-        // Estado
         let contributions = [];
         let isAdmin = false;
 
-        // Utilitários de Formatação
         const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
         const formatDate = (ms) => new Date(ms).toLocaleDateString('pt-BR');
         const formatTime = (ms) => new Date(ms).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
 
-        // Elementos DOM principais
         const ui = {
             targetAmount: document.getElementById('targetAmountDisplay'),
             raisedAmount: document.getElementById('totalRaisedDisplay'),
@@ -286,7 +286,6 @@
             emptyAdminList: document.getElementById('emptyAdminList')
         };
 
-        // 4. Sincronização em Tempo Real (Realtime Listener do Firestore)
         const q = query(collection(db, "contributions"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
             contributions = [];
@@ -296,7 +295,6 @@
             updateUI();
         });
 
-        // Atualizar Interface
         function updateUI() {
             ui.targetAmount.innerText = formatCurrency(TARGET_AMOUNT);
             
@@ -310,7 +308,6 @@
             ui.progressBar.style.width = `${progressPercent}%`;
             ui.progressText.innerText = `${progressPercent.toFixed(1)}% da meta alcançada`;
 
-            // Alternar Visão Admin/Público
             if (isAdmin) {
                 ui.adminSection.classList.remove('hidden');
                 ui.adminToggleContainer.classList.add('hidden');
@@ -324,9 +321,7 @@
             renderLists();
         }
 
-        // Renderizar Listas de Doações
         function renderLists() {
-            // Lista Pública
             if (contributions.length > 0 && !isAdmin) {
                 ui.publicDonationsSection.classList.remove('hidden');
                 ui.publicDonationsList.innerHTML = contributions.slice(0, 5).map(c => `
@@ -346,7 +341,6 @@
                 ui.publicDonationsSection.classList.add('hidden');
             }
 
-            // Lista Admin
             if (contributions.length > 0) {
                 ui.emptyAdminList.classList.add('hidden');
                 ui.adminDonationsList.classList.remove('hidden');
@@ -371,7 +365,6 @@
             }
         }
 
-        // Eventos de Botões Básicos
         ui.copyPixBtn.addEventListener('click', () => {
             const textArea = document.createElement("textarea");
             textArea.value = PIX_KEY;
@@ -391,7 +384,6 @@
             document.body.removeChild(textArea);
         });
 
-        // Eventos do Modal de Login
         document.getElementById('openModalBtn').addEventListener('click', () => {
             ui.pinModal.classList.remove('hidden');
             ui.pinModal.classList.add('flex');
@@ -439,7 +431,6 @@
             }
         });
 
-        // 5. Salvar Nova Doação no Firebase
         ui.addDonationForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = ui.donorName.value.trim();
@@ -468,7 +459,6 @@
             }
         });
 
-        // 6. Apagar Doação do Firebase (Anexado ao window pois estamos em um module)
         window.deleteDonation = async function(id) {
             if (!confirm("Tem a certeza que deseja remover esta doação?")) return;
             
@@ -480,10 +470,10 @@
             }
         };
 
-        // Inicia a Interface
         updateUI();
 
     </script>
 </body>
 </html>
+
 
