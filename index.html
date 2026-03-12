@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Almir em Missões</title>
+    <!-- Tailwind CSS para o design -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para os ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @keyframes fadeIn {
@@ -18,6 +20,7 @@
 </head>
 <body class="bg-neutral-100 font-sans text-neutral-800 pb-10">
 
+    <!-- CABEÇALHO / BANDEIRA -->
     <div class="relative bg-red-600 text-white overflow-hidden shadow-md">
         <div class="absolute inset-0 flex flex-col opacity-20">
             <div class="h-1/2 bg-red-700"></div>
@@ -27,7 +30,8 @@
         <div class="relative z-10 max-w-md mx-auto pt-10 pb-6 px-4 text-center">
             <div class="flex justify-center mb-4">
                 <div class="relative">
-                    <img src="https://ui-avatars.com/api/?name=Almir+Missões&background=000&color=fff&size=128&font-size=0.33" alt="Almir" class="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-lg object-cover bg-white">
+                    <!-- A IMAGEM FOI ALTERADA AQUI PARA almir.jpg -->
+                    <img src="almir.jpg" alt="Almir" class="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-lg object-cover bg-white">
                     <div class="absolute -bottom-2 -right-2 bg-yellow-400 text-black p-1.5 rounded-full border-2 border-white shadow-sm flex items-center justify-center w-8 h-8">
                         <i class="fa-solid fa-earth-americas text-sm"></i>
                     </div>
@@ -48,6 +52,7 @@
 
     <div class="max-w-md mx-auto px-4 -mt-2 relative z-20">
         
+        <!-- CARTÃO DE PROGRESSO -->
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 border-t-4 border-yellow-400">
             <div class="text-center mb-6">
                 <p class="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-1">
@@ -83,6 +88,7 @@
             </div>
         </div>
 
+        <!-- CARTÃO DO PIX -->
         <div class="bg-neutral-900 text-white rounded-2xl shadow-lg p-6 mb-6 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-32 h-32 bg-yellow-500 opacity-10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
             
@@ -104,17 +110,21 @@
             </div>
         </div>
 
+        <!-- LISTA PÚBLICA DE DOADORES -->
         <div id="publicDonationsSection" class="bg-white rounded-2xl shadow-md p-6 mb-6 border border-neutral-100 hidden">
             <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-neutral-800">
                 <i class="fa-solid fa-user text-red-600"></i>
                 Apoiantes Recentes
             </h3>
             <div id="publicDonationsList" class="space-y-3">
-                </div>
+                <!-- Preenchido via JS -->
+            </div>
             <p id="moreDonorsText" class="text-center text-xs text-neutral-400 mt-4 bg-neutral-50 py-2 rounded-lg hidden">
-                </p>
+                <!-- Preenchido via JS -->
+            </p>
         </div>
 
+        <!-- SECÇÃO DO ADMINISTRADOR -->
         <div id="adminSection" class="bg-yellow-50 border-2 border-yellow-400 rounded-2xl shadow-lg p-6 mb-6 animate-fade-in hidden">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-black text-neutral-900 flex items-center gap-2">
@@ -155,10 +165,12 @@
                     Carregando doações...
                 </div>
                 <ul id="adminDonationsList" class="divide-y divide-neutral-100 max-h-64 overflow-y-auto hidden">
-                    </ul>
+                    <!-- Preenchido via JS -->
+                </ul>
             </div>
         </div>
 
+        <!-- VERSÍCULO BÍBLICO -->
         <div class="mt-8 mb-4 px-6 text-center">
             <div class="flex justify-center mb-3">
                 <i class="fa-solid fa-book-open text-2xl text-neutral-400"></i>
@@ -173,12 +185,14 @@
 
     </div>
 
+    <!-- RODAPÉ E BOTÃO DE ADMIN -->
     <div class="mt-6 text-center pb-8" id="adminToggleContainer">
         <button id="openModalBtn" type="button" class="text-neutral-400 hover:text-neutral-800 transition-colors inline-flex items-center gap-1 text-xs font-medium bg-neutral-200/50 py-1.5 px-4 rounded-full">
             <i class="fa-solid fa-lock text-[10px]"></i> Acesso Restrito (Admin)
         </button>
     </div>
 
+    <!-- MODAL DE SENHA -->
     <div id="pinModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm relative transform transition-all m-auto">
             <button id="closeModalBtn" type="button" class="absolute top-4 right-4 text-neutral-400 hover:text-neutral-800 bg-neutral-100 rounded-full w-8 h-8 flex items-center justify-center">
@@ -209,6 +223,7 @@
         </div>
     </div>
 
+    <!-- LÓGICA DO APLICATIVO COM FIREBASE -->
     <script type="module">
         // 1. Importar Firebase via CDN
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -471,3 +486,4 @@
     </script>
 </body>
 </html>
+
