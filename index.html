@@ -1,401 +1,458 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Heart, 
-  Target, 
-  TrendingUp, 
-  Lock, 
-  Unlock, 
-  PlusCircle, 
-  Trash2, 
-  Copy, 
-  CheckCircle2,
-  AlertCircle
-} from 'lucide-react';
-
-// --- FIREBASE SETUP ---
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
-
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-almir-app';
-
-// --- CONFIGURAÇÕES DA CAMPANHA ---
-const GOAL_AMOUNT = 7580.00;
-const PIX_KEY = "ALMIR.CAMPEAO82@GMAIL.COM";
-const ADMIN_PIN = "1234"; // Senha para acessar o painel de controle
-
-// URLs de imagens (Substitua a URL da foto do Almir pela URL real onde você hospedar a foto dele)
-const ANGOLA_FLAG_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Flag_of_Angola.svg/800px-Flag_of_Angola.svg.png";
-const ALMIR_PHOTO_PLACEHOLDER = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"; // Imagem genérica provisória
-
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [donations, setDonations] = useState([]);
-  
-  // Estados da UI
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showPinModal, setShowPinModal] = useState(false);
-  const [pinInput, setPinInput] = useState('');
-  const [copied, setCopied] = useState(false);
-
-  // Estados do Formulário
-  const [donorName, setDonorName] = useState('');
-  const [amount, setAmount] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // 1. Inicializa Autenticação (Obrigatório para o Firestore funcionar)
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Almir em Missões</title>
+    <!-- Tailwind CSS para o design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para os ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-      } catch (error) {
-        console.error("Erro na autenticação:", error);
-      }
-    };
-    
-    initAuth();
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-neutral-100 font-sans text-neutral-800 pb-10">
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // 2. Busca os dados de doações em tempo real
-  useEffect(() => {
-    if (!user) return;
-
-    const donationsRef = collection(db, 'artifacts', appId, 'public', 'donations');
-    
-    const unsubscribe = onSnapshot(donationsRef, 
-      (snapshot) => {
-        const donationsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        // Ordena no frontend para evitar erros de índice no Firestore
-        donationsData.sort((a, b) => {
-          const dateA = a.createdAt?.toMillis() || 0;
-          const dateB = b.createdAt?.toMillis() || 0;
-          return dateB - dateA; // Mais recentes primeiro
-        });
-        setDonations(donationsData);
-      },
-      (error) => {
-        console.error("Erro ao buscar doações:", error);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user]);
-
-  // 3. Cálculos Financeiros
-  const totalRaised = useMemo(() => {
-    return donations.reduce((sum, donation) => sum + (Number(donation.amount) || 0), 0);
-  }, [donations]);
-
-  const amountRemaining = Math.max(0, GOAL_AMOUNT - totalRaised);
-  const progressPercentage = Math.min(100, (totalRaised / GOAL_AMOUNT) * 100);
-
-  // Formatação de Moeda
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
-
-  // 4. Ações
-  const handleCopyPix = () => {
-    navigator.clipboard.writeText(PIX_KEY).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (pinInput === ADMIN_PIN) {
-      setIsAdmin(true);
-      setShowPinModal(false);
-      setPinInput('');
-    } else {
-      alert("Senha incorreta!");
-    }
-  };
-
-  const handleAddDonation = async (e) => {
-    e.preventDefault();
-    if (!donorName || !amount || isNaN(amount) || Number(amount) <= 0) return;
-
-    setIsSubmitting(true);
-    try {
-      const donationsRef = collection(db, 'artifacts', appId, 'public', 'donations');
-      await addDoc(donationsRef, {
-        donorName: donorName.trim(),
-        amount: Number(amount),
-        createdAt: serverTimestamp()
-      });
-      setDonorName('');
-      setAmount('');
-    } catch (error) {
-      console.error("Erro ao adicionar doação:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDeleteDonation = async (id) => {
-    try {
-      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'donations', id));
-    } catch (error) {
-      console.error("Erro ao deletar doação:", error);
-    }
-  };
-
-  if (authLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-zinc-50 text-red-600 font-bold">Carregando Missão...</div>;
-  }
-
-  return (
-    <div className="min-h-screen bg-zinc-100 font-sans pb-12">
-      {/* Header / Hero Section */}
-      <div className="bg-red-600 text-white pt-12 pb-24 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 pattern-dots"></div>
-        <div className="max-w-3xl mx-auto relative z-10 flex flex-col md:flex-row items-center gap-6">
-          
-          {/* Fotos e Bandeiras */}
-          <div className="relative">
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-yellow-400 overflow-hidden shadow-xl bg-white">
-               {/* NOTA: Usando um placeholder. Você pode trocar a variável ALMIR_PHOTO_PLACEHOLDER no código depois */}
-              <img src={ALMIR_PHOTO_PLACEHOLDER} alt="Almir" className="w-full h-full object-cover" />
-            </div>
-            <div className="absolute -bottom-4 -right-4 w-16 h-12 rounded shadow-lg overflow-hidden border-2 border-white">
-              <img src={ANGOLA_FLAG_URL} alt="Bandeira de Angola" className="w-full h-full object-cover" />
-            </div>
-          </div>
-
-          <div className="text-center md:text-left flex-1">
-            <h1 className="text-4xl md:text-5xl font-black mb-2 tracking-tight text-yellow-400 drop-shadow-md">
-              Almir em Missões
-            </h1>
-            <h2 className="text-xl md:text-2xl font-bold opacity-90 uppercase tracking-widest">
-              Rumo a Angola 🇦🇴
-            </h2>
-            <p className="mt-3 text-red-100 max-w-lg">
-              Ajude a custear as passagens de ida e volta para esta importante missão. Cada contribuição faz a diferença!
-            </p>
-          </div>
-
-          <button 
-            onClick={() => isAdmin ? setIsAdmin(false) : setShowPinModal(true)}
-            className="absolute top-4 right-4 p-2 text-red-200 hover:text-white transition-colors"
-            title={isAdmin ? "Sair do Admin" : "Acesso Admin"}
-          >
-            {isAdmin ? <Unlock size={24} /> : <Lock size={24} />}
-          </button>
+    <!-- CABEÇALHO / BANDEIRA -->
+    <div class="relative bg-red-600 text-white overflow-hidden shadow-md">
+        <div class="absolute inset-0 flex flex-col opacity-20">
+            <div class="h-1/2 bg-red-700"></div>
+            <div class="h-1/2 bg-black"></div>
         </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="max-w-3xl mx-auto px-4 -mt-16 relative z-20 space-y-6">
         
-        {/* Card Principal: Progresso */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
-          <div className="flex justify-between items-end mb-4">
-            <div>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Target size={16} className="text-red-500"/> Meta
-              </p>
-              <p className="text-2xl md:text-3xl font-black text-gray-800">
-                {formatCurrency(GOAL_AMOUNT)}
-              </p>
+        <div class="relative z-10 max-w-md mx-auto pt-10 pb-6 px-4 text-center">
+            <div class="flex justify-center mb-4">
+                <div class="relative">
+                    <img src="https://ui-avatars.com/api/?name=Almir+Missões&background=000&color=fff&size=128&font-size=0.33" alt="Almir" class="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-lg object-cover bg-white">
+                    <div class="absolute -bottom-2 -right-2 bg-yellow-400 text-black p-1.5 rounded-full border-2 border-white shadow-sm flex items-center justify-center w-8 h-8">
+                        <i class="fa-solid fa-earth-americas text-sm"></i>
+                    </div>
+                </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1 justify-end">
-                <TrendingUp size={16} className="text-green-500"/> Alcançado
-              </p>
-              <p className="text-2xl md:text-3xl font-black text-green-600">
-                {formatCurrency(totalRaised)}
-              </p>
-            </div>
-          </div>
+            <h1 class="text-3xl font-black uppercase tracking-wider mb-1 drop-shadow-md">
+                Almir em Missões
+            </h1>
+            <h2 class="text-yellow-400 text-xl font-bold uppercase tracking-widest drop-shadow-sm flex items-center justify-center gap-2">
+                Rumo a Angola <span class="text-2xl">🇦🇴</span>
+            </h2>
+        </div>
+        
+        <svg class="absolute bottom-0 w-full h-8 text-neutral-100 fill-current" viewBox="0 0 1440 100" preserveAspectRatio="none">
+            <path d="M0,100 C320,0 1120,0 1440,100 Z"></path>
+        </svg>
+    </div>
 
-          {/* Barra de Progresso */}
-          <div className="relative h-6 bg-zinc-200 rounded-full overflow-hidden mb-4 shadow-inner">
-            <div 
-              className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-500 to-yellow-400 transition-all duration-1000 ease-out flex items-center justify-end pr-2"
-              style={{ width: `${Math.max(5, progressPercentage)}%` }}
-            >
-              {progressPercentage >= 10 && (
-                <span className="text-xs font-bold text-white drop-shadow">
-                  {progressPercentage.toFixed(1)}%
-                </span>
-              )}
+    <div class="max-w-md mx-auto px-4 -mt-2 relative z-20">
+        
+        <!-- CARTÃO DE PROGRESSO -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 border-t-4 border-yellow-400">
+            <div class="text-center mb-6">
+                <p class="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+                    Passagem Ida e Volta
+                </p>
+                <h3 class="text-3xl font-black text-neutral-800" id="targetAmountDisplay">R$ 7.580,00</h3>
             </div>
-          </div>
 
-          <div className="text-center">
-             {amountRemaining > 0 ? (
-                <p className="text-gray-600 font-medium">
-                  Faltam <strong className="text-red-600">{formatCurrency(amountRemaining)}</strong> para a viagem!
-                </p>
-             ) : (
-                <p className="text-green-600 font-bold flex items-center justify-center gap-2">
-                  <Heart size={20} /> Meta alcançada! Glória a Deus!
-                </p>
-             )}
-          </div>
+            <div class="mb-4">
+                <div class="flex justify-between text-sm font-bold mb-2">
+                    <span class="text-green-600 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-up"></i> Arrecadado
+                    </span>
+                    <span class="text-red-500 flex items-center gap-1">
+                        Falta <i class="fa-solid fa-bullseye"></i>
+                    </span>
+                </div>
+                
+                <div class="h-4 bg-neutral-200 rounded-full overflow-hidden shadow-inner">
+                    <div id="progressBar" class="h-full bg-gradient-to-r from-yellow-400 to-green-500 rounded-full transition-all duration-1000 ease-out relative" style="width: 0%">
+                        <div class="absolute top-0 left-0 right-0 bottom-0 bg-white opacity-20 w-full h-full"></div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between mt-2 text-lg font-bold">
+                    <span class="text-green-600" id="totalRaisedDisplay">R$ 0,00</span>
+                    <span class="text-red-500" id="remainingDisplay">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="text-center text-sm text-neutral-500 font-medium bg-neutral-50 py-2 rounded-lg" id="progressText">
+                0% da meta alcançada
+            </div>
         </div>
 
-        {/* Card: Doação (PIX) */}
-        <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-2xl shadow-xl p-6 md:p-8 text-white text-center border-b-4 border-red-600">
-          <Heart size={40} className="mx-auto text-red-500 mb-4 animate-pulse" />
-          <h3 className="text-2xl font-bold mb-2">Faça sua contribuição</h3>
-          <p className="text-zinc-400 mb-6">Envie qualquer valor através do PIX abaixo. A conta é Nubank.</p>
-          
-          <div className="bg-black/50 p-4 rounded-xl flex items-center justify-between border border-zinc-700 max-w-md mx-auto">
-            <span className="font-mono text-lg truncate flex-1 text-yellow-400">{PIX_KEY}</span>
-            <button 
-              onClick={handleCopyPix}
-              className="ml-4 bg-red-600 hover:bg-red-700 text-white p-3 rounded-lg transition-colors flex items-center justify-center"
-            >
-              {copied ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-            </button>
-          </div>
-          {copied && <p className="text-green-400 text-sm mt-3 font-medium">Chave PIX copiada com sucesso!</p>}
-        </div>
-
-        {/* PAINEL ADMINISTRATIVO */}
-        {isAdmin && (
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-yellow-400">
-            <div className="bg-yellow-400 text-yellow-900 p-4 flex items-center gap-2 font-bold">
-              <Lock size={20} /> Área Administrativa
-            </div>
+        <!-- CARTÃO DO PIX -->
+        <div class="bg-neutral-900 text-white rounded-2xl shadow-lg p-6 mb-6 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-yellow-500 opacity-10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
             
-            <div className="p-6">
-              <h4 className="text-lg font-bold mb-4 text-gray-800">Registrar Nova Entrada</h4>
-              <form onSubmit={handleAddDonation} className="flex flex-col md:flex-row gap-4 mb-8">
-                <input 
-                  type="text" 
-                  placeholder="Nome de quem doou (Ex: João, Igreja, Anônimo)" 
-                  value={donorName}
-                  onChange={(e) => setDonorName(e.target.value)}
-                  className="flex-1 p-3 bg-zinc-50 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none"
-                  required
-                />
-                <input 
-                  type="number" 
-                  step="0.01"
-                  placeholder="Valor (R$)" 
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full md:w-48 p-3 bg-zinc-50 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none"
-                  required
-                />
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <PlusCircle size={20} />
-                  {isSubmitting ? 'Salvando...' : 'Adicionar'}
-                </button>
-              </form>
-
-              <h4 className="text-lg font-bold mb-4 text-gray-800 flex items-center justify-between">
-                <span>Histórico de Entradas</span>
-                <span className="text-sm font-normal bg-zinc-100 px-3 py-1 rounded-full text-zinc-600">
-                  {donations.length} registros
-                </span>
-              </h4>
-              
-              <div className="bg-zinc-50 rounded-xl border border-zinc-200 overflow-hidden">
-                {donations.length === 0 ? (
-                  <div className="p-8 text-center text-zinc-500 flex flex-col items-center">
-                    <AlertCircle size={32} className="mb-2 opacity-50" />
-                    <p>Nenhuma entrada registrada ainda.</p>
-                  </div>
-                ) : (
-                  <ul className="divide-y divide-zinc-200 max-h-96 overflow-y-auto">
-                    {donations.map((donation) => (
-                      <li key={donation.id} className="p-4 flex items-center justify-between hover:bg-zinc-100 transition-colors">
-                        <div>
-                          <p className="font-bold text-gray-800">{donation.donorName}</p>
-                          <p className="text-xs text-gray-500">
-                            {donation.createdAt?.toDate().toLocaleDateString('pt-BR')} às {donation.createdAt?.toDate().toLocaleTimeString('pt-BR')}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="font-bold text-green-600">
-                            {formatCurrency(donation.amount)}
-                          </span>
-                          <button 
-                            onClick={() => handleDeleteDonation(donation.id)}
-                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Excluir entrada"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-      </div>
-
-      {/* MODAL DE SENHA */}
-      {showPinModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm animate-in fade-in zoom-in duration-200">
-            <h3 className="text-xl font-bold mb-2 flex items-center gap-2 text-gray-800">
-              <Lock size={20} className="text-red-600" /> Acesso Restrito
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-heart text-red-500 text-xl"></i>
+                Faça a sua contribuição
             </h3>
-            <p className="text-sm text-gray-500 mb-6">
-              Insira o PIN de administrador para gerenciar os valores arrecadados.
-            </p>
-            <form onSubmit={handleLogin}>
-              <input
-                type="password"
-                placeholder="PIN"
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                className="w-full text-center text-2xl tracking-widest p-3 bg-zinc-100 border border-zinc-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none mb-4"
-                autoFocus
-              />
-              <div className="flex gap-3">
-                <button 
-                  type="button" 
-                  onClick={() => setShowPinModal(false)}
-                  className="flex-1 py-3 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-bold rounded-xl transition-colors"
-                >
-                  Cancelar
+            
+            <div class="bg-black/50 p-4 rounded-xl border border-neutral-700 flex flex-col gap-3">
+                <div>
+                    <p class="text-xs text-neutral-400 mb-1">Chave PIX (E-mail - Nubank)</p>
+                    <p class="text-sm sm:text-base font-mono font-bold break-all select-all" id="pixKeyDisplay">
+                        almir.campeao82@gmail.com
+                    </p>
+                </div>
+                <button id="copyPixBtn" type="button" class="w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors bg-yellow-400 text-neutral-900 hover:bg-yellow-500">
+                    <i class="fa-regular fa-copy"></i> <span>Copiar Chave PIX</span>
                 </button>
-                <button 
-                  type="submit"
-                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors"
-                >
-                  Entrar
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
         </div>
-      )}
+
+        <!-- LISTA PÚBLICA DE DOADORES -->
+        <div id="publicDonationsSection" class="bg-white rounded-2xl shadow-md p-6 mb-6 border border-neutral-100 hidden">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-neutral-800">
+                <i class="fa-solid fa-user text-red-600"></i>
+                Apoiantes Recentes
+            </h3>
+            <div id="publicDonationsList" class="space-y-3">
+                <!-- Preenchido via JS -->
+            </div>
+            <p id="moreDonorsText" class="text-center text-xs text-neutral-400 mt-4 bg-neutral-50 py-2 rounded-lg hidden">
+                <!-- Preenchido via JS -->
+            </p>
+        </div>
+
+        <!-- SECÇÃO DO ADMINISTRADOR -->
+        <div id="adminSection" class="bg-yellow-50 border-2 border-yellow-400 rounded-2xl shadow-lg p-6 mb-6 animate-fade-in hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-black text-neutral-900 flex items-center gap-2">
+                    <i class="fa-solid fa-lock text-yellow-600"></i>
+                    Painel de Gestão
+                </h3>
+                <button id="logoutBtn" type="button" class="text-neutral-500 hover:text-red-600 p-1 bg-white rounded-full shadow-sm w-8 h-8 flex items-center justify-center" title="Sair">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+
+            <div class="mb-6 bg-white p-3 rounded-xl border border-yellow-200 text-center text-sm shadow-sm">
+                <span class="text-neutral-500">Valor Inicial Registado: </span>
+                <strong class="text-neutral-800" id="initialAmountDisplay">R$ 1.965,42</strong>
+            </div>
+
+            <form id="addDonationForm" class="bg-white p-4 rounded-xl shadow-sm mb-6 border border-neutral-200">
+                <h4 class="font-bold text-sm text-neutral-600 mb-3">Registar Nova Doação</h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-neutral-500 mb-1">Nome do Doador</label>
+                        <input type="text" id="donorName" placeholder="Ex: Maria Silva" class="w-full p-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition-shadow" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-neutral-500 mb-1">Valor (R$)</label>
+                        <input type="number" step="0.01" min="0.1" id="donationAmount" placeholder="Ex: 50.00" class="w-full p-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition-shadow" required>
+                    </div>
+                    <button type="submit" id="submitDonationBtn" class="w-full bg-neutral-900 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors shadow-md">
+                        <i class="fa-solid fa-circle-plus"></i>
+                        <span>Adicionar Valor ao Total</span>
+                    </button>
+                </div>
+            </form>
+
+            <h4 class="font-bold text-sm text-neutral-600 mb-3">Histórico de Adições</h4>
+            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden">
+                <div id="emptyAdminList" class="p-6 text-center text-neutral-500 text-sm">
+                    Nenhuma doação nova registada ainda.
+                </div>
+                <ul id="adminDonationsList" class="divide-y divide-neutral-100 max-h-64 overflow-y-auto hidden">
+                    <!-- Preenchido via JS -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- VERSÍCULO BÍBLICO -->
+        <div class="mt-8 mb-4 px-6 text-center">
+            <div class="flex justify-center mb-3">
+                <i class="fa-solid fa-book-open text-2xl text-neutral-400"></i>
+            </div>
+            <blockquote class="text-sm italic text-neutral-600 leading-relaxed">
+                "Não deixes de fazer bem a quem o merece, estando em tuas mãos a capacidade de fazê-lo. Não digas ao teu próximo: Vai, e volta amanhã que to darei, se já o tens contigo."
+            </blockquote>
+            <p class="text-xs font-bold text-neutral-500 mt-3 uppercase tracking-wider">
+                - Provérbios 3:27-28
+            </p>
+        </div>
 
     </div>
-  );
-}
+
+    <!-- RODAPÉ E BOTÃO DE ADMIN -->
+    <div class="mt-6 text-center pb-8" id="adminToggleContainer">
+        <button id="openModalBtn" type="button" class="text-neutral-400 hover:text-neutral-800 transition-colors inline-flex items-center gap-1 text-xs font-medium bg-neutral-200/50 py-1.5 px-4 rounded-full">
+            <i class="fa-solid fa-lock text-[10px]"></i> Acesso Restrito (Admin)
+        </button>
+    </div>
+
+    <!-- MODAL DE SENHA -->
+    <div id="pinModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm relative transform transition-all m-auto">
+            <button id="closeModalBtn" type="button" class="absolute top-4 right-4 text-neutral-400 hover:text-neutral-800 bg-neutral-100 rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="text-center mb-6 mt-2">
+                <div class="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-600">
+                    <i class="fa-solid fa-unlock text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-neutral-800">Acesso do Administrador</h2>
+                <p class="text-sm text-neutral-500 mt-2">Insira a senha de 4 dígitos para gerir as doações.</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="relative w-full mb-4">
+                    <input type="password" id="pinInput" placeholder="****" maxlength="4" class="w-full text-center tracking-widest text-2xl p-4 border-2 rounded-xl outline-none focus:ring-4 focus:ring-yellow-400/20 transition-all border-neutral-200 text-neutral-800 pr-12">
+                    <button type="button" id="togglePasswordBtn" class="absolute inset-y-0 right-0 pr-4 flex items-center text-neutral-400 hover:text-neutral-600">
+                        <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+                
+                <p id="pinError" class="text-red-500 text-xs text-center mb-4 font-bold animate-pulse hidden">Senha incorreta! Tente novamente.</p>
+                
+                <button type="submit" class="w-full bg-neutral-900 text-white font-bold py-3.5 rounded-xl hover:bg-black transition-colors shadow-lg">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LÓGICA DO APLICATIVO -->
+    <script>
+        // Configurações principais
+        const TARGET_AMOUNT = 7580.00;
+        const INITIAL_AMOUNT = 1965.42;
+        const PIX_KEY = "almir.campeao82@gmail.com";
+        const ADMIN_PIN = "1234";
+        
+        // Estado
+        let contributions = [];
+        let isAdmin = false;
+        let isOnlineMode = false;
+        let db, user, appId;
+
+        // Utilitários de Formatação
+        const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+        const formatDate = (ms) => new Date(ms).toLocaleDateString('pt-BR');
+        const formatTime = (ms) => new Date(ms).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+        // Elementos DOM principais
+        const ui = {
+            targetAmount: document.getElementById('targetAmountDisplay'),
+            raisedAmount: document.getElementById('totalRaisedDisplay'),
+            remainingAmount: document.getElementById('remainingDisplay'),
+            progressBar: document.getElementById('progressBar'),
+            progressText: document.getElementById('progressText'),
+            copyPixBtn: document.getElementById('copyPixBtn'),
+            
+            adminSection: document.getElementById('adminSection'),
+            adminToggleContainer: document.getElementById('adminToggleContainer'),
+            pinModal: document.getElementById('pinModal'),
+            loginForm: document.getElementById('loginForm'),
+            pinInput: document.getElementById('pinInput'),
+            pinError: document.getElementById('pinError'),
+            
+            addDonationForm: document.getElementById('addDonationForm'),
+            donorName: document.getElementById('donorName'),
+            donationAmount: document.getElementById('donationAmount'),
+            submitDonationBtn: document.getElementById('submitDonationBtn'),
+            
+            publicDonationsSection: document.getElementById('publicDonationsSection'),
+            publicDonationsList: document.getElementById('publicDonationsList'),
+            moreDonorsText: document.getElementById('moreDonorsText'),
+            adminDonationsList: document.getElementById('adminDonationsList'),
+            emptyAdminList: document.getElementById('emptyAdminList')
+        };
+
+        // Atualizar Interface
+        function updateUI() {
+            ui.targetAmount.innerText = formatCurrency(TARGET_AMOUNT);
+            
+            const addedContributions = contributions.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+            const totalRaised = INITIAL_AMOUNT + addedContributions;
+            const remaining = Math.max(0, TARGET_AMOUNT - totalRaised);
+            const progressPercent = Math.min(100, (totalRaised / TARGET_AMOUNT) * 100);
+
+            ui.raisedAmount.innerText = formatCurrency(totalRaised);
+            ui.remainingAmount.innerText = formatCurrency(remaining);
+            ui.progressBar.style.width = `${progressPercent}%`;
+            ui.progressText.innerText = `${progressPercent.toFixed(1)}% da meta alcançada`;
+
+            // Alternar Visão Admin/Público
+            if (isAdmin) {
+                ui.adminSection.classList.remove('hidden');
+                ui.adminToggleContainer.classList.add('hidden');
+                ui.pinModal.classList.add('hidden');
+                ui.pinModal.classList.remove('flex');
+            } else {
+                ui.adminSection.classList.add('hidden');
+                ui.adminToggleContainer.classList.remove('hidden');
+            }
+
+            renderLists();
+        }
+
+        // Renderizar Listas de Doações
+        function renderLists() {
+            // Lista Pública
+            if (contributions.length > 0 && !isAdmin) {
+                ui.publicDonationsSection.classList.remove('hidden');
+                ui.publicDonationsList.innerHTML = contributions.slice(0, 5).map(c => `
+                    <div class="flex justify-between items-center py-2 border-b border-neutral-100 last:border-0">
+                        <span class="font-medium text-neutral-700">${c.name}</span>
+                        <span class="font-bold text-green-600">+${formatCurrency(c.amount)}</span>
+                    </div>
+                `).join('');
+                
+                if (contributions.length > 5) {
+                    ui.moreDonorsText.classList.remove('hidden');
+                    ui.moreDonorsText.innerText = `E mais ${contributions.length - 5} pessoa(s) apoiaram!`;
+                } else {
+                    ui.moreDonorsText.classList.add('hidden');
+                }
+            } else {
+                ui.publicDonationsSection.classList.add('hidden');
+            }
+
+            // Lista Admin
+            if (contributions.length > 0) {
+                ui.emptyAdminList.classList.add('hidden');
+                ui.adminDonationsList.classList.remove('hidden');
+                ui.adminDonationsList.innerHTML = contributions.map(c => `
+                    <li class="p-3 flex justify-between items-center hover:bg-neutral-50 transition-colors">
+                        <div>
+                            <p class="font-bold text-sm text-neutral-800">${c.name}</p>
+                            <p class="text-xs text-neutral-400">${formatDate(c.createdAt)} às ${formatTime(c.createdAt)}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-green-600 text-sm">+${formatCurrency(c.amount)}</span>
+                            <button onclick="window.deleteDonation('${c.id}')" class="text-neutral-300 hover:text-red-500 transition-colors p-1" title="Remover">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </li>
+                `).join('');
+            } else {
+                ui.emptyAdminList.classList.remove('hidden');
+                ui.adminDonationsList.classList.add('hidden');
+            }
+        }
+
+        // Eventos de Botões Básicos
+        ui.copyPixBtn.addEventListener('click', () => {
+            const textArea = document.createElement("textarea");
+            textArea.value = PIX_KEY;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                ui.copyPixBtn.classList.replace('bg-yellow-400', 'bg-green-600');
+                ui.copyPixBtn.classList.replace('text-neutral-900', 'text-white');
+                ui.copyPixBtn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Copiado!</span>';
+                setTimeout(() => {
+                    ui.copyPixBtn.classList.replace('bg-green-600', 'bg-yellow-400');
+                    ui.copyPixBtn.classList.replace('text-white', 'text-neutral-900');
+                    ui.copyPixBtn.innerHTML = '<i class="fa-regular fa-copy"></i> <span>Copiar Chave PIX</span>';
+                }, 2000);
+            } catch (err) {}
+            document.body.removeChild(textArea);
+        });
+
+        // Eventos do Modal de Login
+        document.getElementById('openModalBtn').addEventListener('click', () => {
+            ui.pinModal.classList.remove('hidden');
+            ui.pinModal.classList.add('flex'); // Garante que fica centralizado
+            setTimeout(() => ui.pinInput.focus(), 100);
+        });
+
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            ui.pinModal.classList.add('hidden');
+            ui.pinModal.classList.remove('flex');
+            ui.pinError.classList.add('hidden');
+            ui.pinInput.value = '';
+        });
+
+        // Olhinho da Senha
+        document.getElementById('togglePasswordBtn').addEventListener('click', () => {
+            const icon = document.getElementById('eyeIcon');
+            if (ui.pinInput.type === 'password') {
+                ui.pinInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                ui.pinInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            isAdmin = false;
+            updateUI();
+        });
+
+        // Submissão do Login (Corrigido para não recarregar a página)
+        ui.loginForm.addEventListener('submit', (e) => {
+            e.preventDefault(); // Impede o recarregamento da página!
+            if (ui.pinInput.value === ADMIN_PIN) {
+                isAdmin = true;
+                ui.pinInput.value = '';
+                ui.pinError.classList.add('hidden');
+                updateUI();
+            } else {
+                ui.pinError.classList.remove('hidden');
+                ui.pinInput.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
+                setTimeout(() => {
+                    ui.pinInput.classList.remove('border-red-500', 'bg-red-50', 'text-red-700');
+                }, 1500);
+            }
+        });
+
+        // Submissão de Nova Doação
+        ui.addDonationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = ui.donorName.value.trim();
+            const amount = parseFloat(ui.donationAmount.value.replace(',', '.'));
+            
+            if (!name || isNaN(amount)) return;
+            
+            ui.submitDonationBtn.disabled = true;
+            ui.submitDonationBtn.innerHTML = 'Salvando...';
+
+            const newDoc = {
+                name: name,
+                amount: amount,
+                createdAt: Date.now(),
+                addedBy: 'local-user'
+            };
+
+            // Simulação Local de Sucesso
+            newDoc.id = Date.now().toString();
+            contributions.unshift(newDoc); // Adiciona no início da lista
+            updateUI();
+
+            ui.donorName.value = '';
+            ui.donationAmount.value = '';
+            ui.submitDonationBtn.disabled = false;
+            ui.submitDonationBtn.innerHTML = '<i class="fa-solid fa-circle-plus"></i><span>Adicionar Valor ao Total</span>';
+        });
+
+        // Apagar Doação
+        window.deleteDonation = function(id) {
+            if (!confirm("Tem a certeza que deseja remover esta doação?")) return;
+            contributions = contributions.filter(c => c.id !== id);
+            updateUI();
+        };
+
+        // Inicia a Interface
+        updateUI();
+
+    </script>
+</body>
+</html>
+
